@@ -1,10 +1,8 @@
 'use client'
 
 import { useMemo } from 'react'
-import dynamic from 'next/dynamic'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts'
 import { calculatePLData } from '@/utils/calculations'
-
-const Plot = dynamic(() => import('react-plotly.js'), { ssr: false })
 
 interface Tab3Props {
   priceData: any
@@ -89,7 +87,7 @@ export default function Tab3({ priceData, qtyData, dateStart, dateEnd }: Tab3Pro
         </table>
       </div>
 
-      {/* ウォーターフォールチャート */}
+      {/* P/L分解（BarChartで代替） */}
       <div style={{ marginTop: '2rem' }}>
         <h3 style={{ 
           marginBottom: '1rem', 
@@ -97,36 +95,42 @@ export default function Tab3({ priceData, qtyData, dateStart, dateEnd }: Tab3Pro
           fontWeight: 600,
           color: '#262730'
         }}>
-          P/L分解（ウォーターフォール）
+          P/L分解
         </h3>
-        <Plot
-          data={[
-            {
-              type: 'waterfall',
-              name: 'P/L分解',
-              orientation: 'v',
-              measure: ['absolute', 'relative', 'total'],
-              x: ['Hold P/L', 'ポジション変更効果', 'Actual P/L'],
-              y: [totalHoldPL, strategyEffect, totalActualPL],
-              connector: { line: { color: 'rgb(63, 63, 63)' } },
-              increasing: { marker: { color: 'green' } },
-              decreasing: { marker: { color: 'red' } },
-              totals: { marker: { color: 'blue' } },
-              textposition: 'outside',
-              text: [
-                formatNumber(totalHoldPL),
-                formatNumber(strategyEffect),
-                formatNumber(totalActualPL)
-              ]
-            }
-          ]}
-          layout={{
-            title: '戦略比較: Hold vs Actual P/L (USD)',
-            showlegend: false,
-            height: 500
-          }}
-          style={{ width: '100%', height: '500px' }}
-        />
+        <ResponsiveContainer width="100%" height={500}>
+          <BarChart
+            data={[
+              { name: 'Hold P/L', value: totalHoldPL },
+              { name: 'ポジション変更効果', value: strategyEffect },
+              { name: 'Actual P/L', value: totalActualPL }
+            ]}
+            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="name" />
+            <YAxis />
+            <Tooltip 
+              formatter={(value: number) => formatNumber(value)}
+            />
+            <Legend />
+            <Bar dataKey="value">
+              {[
+                { value: totalHoldPL },
+                { value: strategyEffect },
+                { value: totalActualPL }
+              ].map((entry, index) => (
+                <Cell 
+                  key={`cell-${index}`} 
+                  fill={
+                    index === 0 ? '#3b82f6' : // Hold P/L: 青
+                    index === 1 ? (strategyEffect >= 0 ? '#10b981' : '#ef4444') : // 効果: 緑/赤
+                    '#8b5cf6' // Actual P/L: 紫
+                  }
+                />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
       </div>
 
       {/* 限月別内訳 */}

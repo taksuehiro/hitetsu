@@ -1,10 +1,8 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import dynamic from 'next/dynamic'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts'
 import { calculatePLData } from '@/utils/calculations'
-
-const Plot = dynamic(() => import('react-plotly.js'), { ssr: false })
 
 interface Tab4Props {
   priceData: any
@@ -158,7 +156,7 @@ export default function Tab4({ priceData, qtyData, dateStart, dateEnd }: Tab4Pro
         </label>
       </div>
 
-      {/* ヒートマップ */}
+      {/* ヒートマップ（簡易版：各限月のP/L寄与を棒グラフで表示） */}
       <div style={{ marginTop: '2rem' }}>
         <h3 style={{ 
           marginBottom: '1rem', 
@@ -166,49 +164,54 @@ export default function Tab4({ priceData, qtyData, dateStart, dateEnd }: Tab4Pro
           fontWeight: 600,
           color: '#262730'
         }}>
-          限月間スプレッドP/Lヒートマップ
+          限月別P/L寄与
           {strategy === 'actual' && '（Actual戦略）'}
           {strategy === 'hold' && '（Hold戦略）'}
           {strategy === 'diff' && '（Actual - Hold）'}
         </h3>
-        <Plot
-          data={[
-            {
-              z: currentData,
-              x: currentPrompts,
-              y: currentPrompts,
-              type: 'heatmap',
-              colorscale: [
-                [0.0, 'darkred'],
-                [0.25, 'red'],
-                [0.5, 'white'],
-                [0.75, 'lightblue'],
-                [1.0, 'darkblue']
-              ],
-              zmid: 0,
-              zmin: -maxAbs,
-              zmax: maxAbs,
-              text: currentData.map(row =>
-                row.map(val => (val !== null ? formatNumber(val) : ''))
-              ),
-              texttemplate: '%{text}',
-              textfont: { size: 9 },
-              colorbar: { title: 'Spread P/L (USD)' }
-            }
-          ]}
-          layout={{
-            title: `限月間スプレッドP/Lマトリクス${
-              strategy === 'actual' ? '（Actual戦略）' :
-              strategy === 'hold' ? '（Hold戦略）' :
-              '（Actual - Hold）'
-            }`,
-            xaxis: { title: 'From Prompt' },
-            yaxis: { title: 'To Prompt' },
-            height: 600,
-            width: 700
-          }}
-          style={{ width: '100%', height: '600px' }}
-        />
+        <ResponsiveContainer width="100%" height={500}>
+          <BarChart
+            data={plData.map(d => ({
+              prompt: d.prompt,
+              'P/L': strategy === 'actual' ? d.actualPL : 
+                     strategy === 'hold' ? d.holdPL : 
+                     (d.actualPL - d.holdPL)
+            }))}
+            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="prompt" />
+            <YAxis />
+            <Tooltip 
+              formatter={(value: number) => formatNumber(value)}
+              labelFormatter={(label) => `限月: ${label}`}
+            />
+            <Legend />
+            <Bar dataKey="P/L">
+              {plData.map((d, index) => {
+                const value = strategy === 'actual' ? d.actualPL : 
+                             strategy === 'hold' ? d.holdPL : 
+                             (d.actualPL - d.holdPL)
+                return (
+                  <Cell 
+                    key={`cell-${index}`} 
+                    fill={value >= 0 ? '#3b82f6' : '#ef4444'}
+                  />
+                )
+              })}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+        <div style={{ 
+          marginTop: '1rem', 
+          padding: '1rem',
+          backgroundColor: '#f0f2f6',
+          borderRadius: '0.5rem',
+          fontSize: '0.875rem',
+          color: '#262730'
+        }}>
+          <p>※ ヒートマップの完全な実装には、Rechartsでは対応できないため、各限月のP/L寄与を棒グラフで表示しています。</p>
+        </div>
       </div>
     </div>
   )

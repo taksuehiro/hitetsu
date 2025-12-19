@@ -1,10 +1,8 @@
 'use client'
 
 import { useMemo } from 'react'
-import dynamic from 'next/dynamic'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { safeGetValue } from '@/utils/calculations'
-
-const Plot = dynamic(() => import('react-plotly.js'), { ssr: false })
 
 interface Tab2Props {
   priceData: any
@@ -194,26 +192,31 @@ export default function Tab2({ priceData, qtyData, dateStart, dateEnd }: Tab2Pro
         }}>
           Spread推移
         </h3>
-        <Plot
-          data={[
-            {
-              x: [dateStart, dateEnd],
-              y: [spreadData.spreadStart, spreadData.spreadEnd],
-              type: 'scatter',
-              mode: 'lines+markers',
-              name: 'Spread',
-              line: { width: 3 },
-              marker: { size: 10 }
-            }
-          ]}
-          layout={{
-            title: 'Cash-3M Spread推移',
-            xaxis: { title: '日付' },
-            yaxis: { title: 'Spread (USD)' },
-            height: 400
-          }}
-          style={{ width: '100%', height: '400px' }}
-        />
+        <ResponsiveContainer width="100%" height={400}>
+          <LineChart
+            data={[
+              { date: dateStart, Spread: spreadData.spreadStart },
+              { date: dateEnd, Spread: spreadData.spreadEnd }
+            ]}
+            margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="date" />
+            <YAxis />
+            <Tooltip 
+              formatter={(value: number) => formatNumber(value)}
+            />
+            <Legend />
+            <Line 
+              type="monotone" 
+              dataKey="Spread" 
+              stroke="#3b82f6" 
+              strokeWidth={3}
+              dot={{ r: 6 }}
+              activeDot={{ r: 8 }}
+            />
+          </LineChart>
+        </ResponsiveContainer>
       </div>
     </div>
   )

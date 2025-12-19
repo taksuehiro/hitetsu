@@ -13,9 +13,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "xlsx": "^0.18.5",
-    "plotly.js": "^2.27.0",
-    "react-plotly.js": "^2.6.0",
-    "@types/plotly.js": "^2.12.29"
+    "recharts": "^2.10.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

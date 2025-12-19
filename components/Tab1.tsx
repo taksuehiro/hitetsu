@@ -1,10 +1,8 @@
 'use client'
 
 import { useMemo } from 'react'
-import dynamic from 'next/dynamic'
-import { calculatePLData, safeGetValue } from '@/utils/calculations'
-
-const Plot = dynamic(() => import('react-plotly.js'), { ssr: false })
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { calculatePLData } from '@/utils/calculations'
 
 interface Tab1Props {
   priceData: any
@@ -166,32 +164,27 @@ export default function Tab1({ priceData, qtyData, dateStart, dateEnd }: Tab1Pro
         }}>
           限月別P/L比較
         </h3>
-        <Plot
-          data={[
-            {
-              x: plData.map(d => d.prompt),
-              y: plData.map(d => d.holdPL),
-              name: 'Hold P/L',
-              type: 'bar',
-              marker: { color: 'lightblue' }
-            },
-            {
-              x: plData.map(d => d.prompt),
-              y: plData.map(d => d.actualPL),
-              name: 'Actual P/L',
-              type: 'bar',
-              marker: { color: 'lightcoral' }
-            }
-          ]}
-          layout={{
-            title: '限月別P/L比較（USD）',
-            xaxis: { title: '限月' },
-            yaxis: { title: 'P/L (USD)' },
-            barmode: 'group',
-            height: 500
-          }}
-          style={{ width: '100%', height: '500px' }}
-        />
+        <ResponsiveContainer width="100%" height={500}>
+          <BarChart
+            data={plData.map(d => ({
+              prompt: d.prompt,
+              'Hold P/L': d.holdPL,
+              'Actual P/L': d.actualPL
+            }))}
+            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="prompt" />
+            <YAxis />
+            <Tooltip 
+              formatter={(value: number) => formatNumber(value)}
+              labelFormatter={(label) => `限月: ${label}`}
+            />
+            <Legend />
+            <Bar dataKey="Hold P/L" fill="#93c5fd" />
+            <Bar dataKey="Actual P/L" fill="#fca5a5" />
+          </BarChart>
+        </ResponsiveContainer>
       </div>
     </div>
   )
